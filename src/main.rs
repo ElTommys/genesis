@@ -1,7 +1,14 @@
+mod azar;
+mod bioma;
+mod conocimiento;
 mod cuantica;
 mod elementos;
+mod mente;
 mod mundo;
+mod ordenes;
 mod particula;
+mod vida;
+mod vista;
 
 use cuantica::Atomo;
 use mundo::{Mundo, Parametros};
@@ -16,6 +23,7 @@ USO:
   universo tabla                   Tabla periódica deducida de la mecánica cuántica
   universo elemento <Z|símbolo>    Ficha de un átomo (ej: universo elemento Fe)
   universo simular [opciones]      Mundo 3D que evoluciona solo
+  universo evolucionar [opciones]  Criaturas con cerebro que aprenden a cazar (neuroevolución)
 
 OPCIONES DE simular (todas editables):
   --atomos H:200,O:100,Na+:10,Cl-:10   Qué sembrar (+ catión, - anión)
@@ -26,6 +34,12 @@ OPCIONES DE simular (todas editables):
   --energia 8.0      Energía de enlace (más alta = enlaces más estables)
   --reaccion 0.5     Probabilidad de reaccionar al chocar
   --semilla 42       Misma semilla = mismo universo
+
+OPCIONES DE evolucionar:
+  --poblacion 80     Cuántas criaturas por generación
+  --generaciones 60  Cuántas generaciones evolucionar
+  --pasos 400        Instantes de vida en que se evalúa a cada criatura
+  --semilla 2024     Misma semilla = misma evolución
 ";
 
 fn main() {
@@ -38,7 +52,12 @@ fn main() {
             None => eprintln!("Falta el elemento. Ej: universo elemento 8"),
         },
         Some("simular") => simular(&args[1..]),
-        _ => print!("{AYUDA}"),
+        Some("evolucionar") => evolucionar(&args[1..]),
+        Some(o @ ("saber" | "adn" | "bioma" | "ver" | "vivir")) => ordenes::ejecutar(o, &args[1..]),
+        _ => {
+            print!("{AYUDA}");
+            print!("{}", ordenes::AYUDA);
+        }
     }
 }
 
@@ -146,4 +165,51 @@ fn simular(args: &[String]) {
     }
     let s = t0.elapsed().as_secs_f64();
     println!("\n{} pasos en {:.2}s ({:.0} átomo·pasos/s)", pasos, s, pasos as f64 * m.cuerpos.len() as f64 / s);
+}
+
+fn evolucionar(args: &[String]) {
+    let mut poblacion = 80usize;
+    let mut generaciones = 60u32;
+    let mut pasos = 400u32;
+    let mut semilla = 2024u64;
+    let mut it = args.iter();
+    while let Some(flag) = it.next() {
+        let Some(v) = it.next() else { break };
+        let num = || v.parse::<f64>().unwrap_or_else(|_| panic!("valor inválido para {flag}: {v}"));
+        match flag.as_str() {
+            "--poblacion" => poblacion = num() as usize,
+            "--generaciones" => generaciones = num() as u32,
+            "--pasos" => pasos = num() as u32,
+            "--semilla" => semilla = num() as u64,
+            otro => panic!("opción desconocida: {otro}"),
+        }
+    }
+
+    println!(
+        "Neuroevolución: {} criaturas · {} generaciones · cerebro de {} pesos\n",
+        poblacion, generaciones, mente::PESOS
+    );
+    println!("{:>4}  {:>8}  {:>8}  {}", "gen", "mejor", "media", "progreso");
+    let t0 = Instant::now();
+    let mut ev = mente::Evolucion::nueva(poblacion, pasos, semilla);
+    let mut primera = None;
+    let mut ultima = 0.0;
+    let mut mejor_global = f64::MIN;
+    for n in 0..generaciones {
+        let (g, _) = ev.generacion(n);
+        primera.get_or_insert(g.media);
+        ultima = g.media;
+        mejor_global = mejor_global.max(g.mejor);
+        if n % (generaciones / 20).max(1) == 0 || n == generaciones - 1 {
+            let barra = "█".repeat((g.media as usize).min(40));
+            println!("{:>4}  {:>8.1}  {:>8.2}  {}", g.n, g.mejor, g.media, barra);
+        }
+    }
+    let s = t0.elapsed().as_secs_f64();
+    let ini = primera.unwrap_or(0.0).max(0.01);
+    println!(
+        "\nLa población pasó de cazar {:.1} a {:.1} de media (×{:.1}). Mejor marca: {:.0} presas.",
+        ini, ultima, ultima / ini, mejor_global
+    );
+    println!("{} generaciones en {:.2}s.", generaciones, s);
 }
