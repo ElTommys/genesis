@@ -11,6 +11,7 @@ pub const AYUDA: &str = "
   genesis bioma [opciones]         Ecosistema vivo en la terminal
   genesis vivir [opciones]         Ecosistema vivo en ventana (visual)
   genesis ver   [opciones]         Química 3D en ventana (visual; acepta las opciones de simular)
+  genesis atomo [Z|símbolo]       Microscopio cuántico: nube |ψ|², núcleo, nucleones y quarks
 
 OPCIONES DE bioma / vivir:
   --especies Pasto:500,Conejo:60,Zorro:8,Champiñón:30
@@ -34,6 +35,11 @@ pub fn ejecutar(orden: &str, args: &[String]) {
         }
         "vivir" => crate::vista::vivir(crear_bioma(args).0),
         "ver" => crate::vista::ver(crear_mundo(args)),
+        "atomo" => {
+            let a = args.first().map(String::as_str).unwrap_or("C");
+            let z = a.parse::<u32>().ok().or_else(|| crate::elementos::z_de_simbolo(a)).unwrap_or(6);
+            crate::vista_atomo::ver(z);
+        }
         _ => unreachable!(),
     }
 }

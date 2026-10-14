@@ -3,12 +3,14 @@ mod bioma;
 mod conocimiento;
 mod cuantica;
 mod elementos;
+mod fisica;
 mod mente;
 mod mundo;
 mod ordenes;
 mod particula;
 mod vida;
 mod vista;
+mod vista_atomo;
 
 use cuantica::Atomo;
 use mundo::{Mundo, Parametros};
@@ -53,7 +55,7 @@ fn main() {
         },
         Some("simular") => simular(&args[1..]),
         Some("evolucionar") => evolucionar(&args[1..]),
-        Some(o @ ("saber" | "adn" | "bioma" | "ver" | "vivir")) => ordenes::ejecutar(o, &args[1..]),
+        Some(o @ ("saber" | "adn" | "bioma" | "ver" | "vivir" | "atomo")) => ordenes::ejecutar(o, &args[1..]),
         _ => {
             print!("{AYUDA}");
             print!("{}", ordenes::AYUDA);

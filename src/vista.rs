@@ -14,6 +14,7 @@ fn conf(titulo: &str) -> Conf {
         window_height: 800,
         high_dpi: true,
         sample_count: 4,
+        window_resizable: true,
         ..Default::default()
     }
 }
