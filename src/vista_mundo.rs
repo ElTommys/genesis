@@ -112,7 +112,8 @@ fn malla_terreno(b: &Bioma) -> Vec<Mesh> {
     let alt = |cc: usize, ff: usize| c.celdas[ff.min(filas - 1) * cols + cc.min(cols - 1)].altitud;
     // Se parte en franjas para no pasar de 65.535 vértices por malla.
     let mut mallas = Vec::new();
-    let franja = 40;
+    // Franjas de 6 filas: cada llamada de dibujo de macroquad admite 5.000 índices.
+    let franja = 6;
     let mut f0 = 0;
     while f0 < filas - 1 {
         let f1 = (f0 + franja).min(filas - 1);
