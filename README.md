@@ -24,9 +24,11 @@ Cada nivel se construye solo con las reglas del anterior:
 | 3 · Fisión y fusión (U-235 → productos; cadenas de decaimiento) | — | siguiente |
 | 4 · Bioquímica: agua, aminoácidos, ADN/ARN, código genético, proteínas | `vida.rs` | 🟡 parcial |
 | 4 · Metabolismo: ATP, glucólisis, ciclo de Krebs, cadena respiratoria, fotosíntesis | — | pendiente |
-| 5 · Célula: membrana, bomba Na⁺/K⁺, orgánulos, vacuola; animal vs vegetal; mitosis y meiosis | — | pendiente |
-| 6 · Tejidos animales: epitelial, conectivo, sanguíneo, muscular, nervioso → órganos y sistemas | — | pendiente |
-| 6 · Tejidos vegetales: meristemos, parénquima (clorofila), xilema y floema, epidermis y estomas (intercambio gaseoso) | — | pendiente |
+| 5 · Célula animal y vegetal (visual): membrana, bomba Na⁺/K⁺, núcleo, mitocondrias, RE, Golgi, ribosomas, cloroplastos, vacuola | `vista_cuerpo.rs` | ✅ visual |
+| 5 · Orgánulos y macromoléculas (visual): mitocondria y crestas, ATP sintasa girando, núcleo y cromatina, ADN con el gen real de la insulina | `vista_cuerpo.rs` | ✅ visual |
+| 5 · Mitosis, meiosis y metabolismo simulado molécula a molécula | — | pendiente |
+| 6 · Humano y mamíferos: corazón (late), cerebro, pulmones (respiran), hígado, estómago, riñón, sangre, músculo → sus tejidos | `vista_cuerpo.rs` | ✅ visual |
+| 6 · Plantas: hoja (parénquima, estomas), tallo (xilema y floema), raíz (pelos radicales) | `vista_cuerpo.rs` | ✅ visual |
 | 6 · Digestión: los alimentos se descomponen en glucosa, aminoácidos y lípidos, que alimentan el ATP y la síntesis de proteínas | — | pendiente |
 | 7 · Organismo → población → comunidad → ecosistema: densidad, estructura de edades, riqueza, índice de Shannon, pirámide de biomasa | `bioma.rs`, `vista_mundo.rs` | ✅ |
 | 8 · Biomas por Whittaker (tundra, taiga, bosque, pradera, desierto, matorral, sabana, selva) con relieve, clima (−6.5 °C/km) y lluvia orográfica | `clima.rs` | ✅ |
@@ -36,7 +38,8 @@ Cada nivel se construye solo con las reglas del anterior:
 ## Uso
 
 ```
-cargo run --release -- mundo           # BIOSFERA 3D: zoom de organismo a bioma
+cargo run --release -- mundo           # BIOSFERA 3D: zoom de organismo a bioma (Enter = entrar al cuerpo)
+cargo run --release -- cuerpo Humano   # dentro de un ser vivo: órgano → tejido → célula → ADN/ATP → átomo
 cargo run --release -- atomo U        # microscopio cuántico: zoom del átomo a los quarks
 cargo run --release -- molecula glucosa  # molécula 3D (o cualquier SMILES: molecula "CCO")
 cargo run --release -- reaccion "C6H12O6 + 6O2 -> 6CO2 + 6H2O"

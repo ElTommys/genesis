@@ -13,6 +13,7 @@ mod quimica;
 mod vida;
 mod vista;
 mod vista_atomo;
+mod vista_cuerpo;
 mod vista_molecula;
 mod vista_mundo;
 
@@ -59,7 +60,7 @@ fn main() {
         },
         Some("simular") => simular(&args[1..]),
         Some("evolucionar") => evolucionar(&args[1..]),
-        Some(o @ ("saber" | "adn" | "bioma" | "ver" | "vivir" | "atomo" | "molecula" | "moleculas" | "reaccion" | "mundo")) => ordenes::ejecutar(o, &args[1..]),
+        Some(o @ ("saber" | "adn" | "bioma" | "ver" | "vivir" | "atomo" | "molecula" | "moleculas" | "reaccion" | "mundo" | "cuerpo")) => ordenes::ejecutar(o, &args[1..]),
         _ => {
             print!("{AYUDA}");
             print!("{}", ordenes::AYUDA);

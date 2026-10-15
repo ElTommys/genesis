@@ -13,7 +13,7 @@ use macroquad::prelude::*;
 
 /// Un electrón con sus cuatro números cuánticos (n, l, mₗ, mₛ).
 #[derive(Clone, Copy, PartialEq)]
-struct Electron {
+pub(crate) struct Electron {
     n: u32,
     l: u32,
     ml: i32,
@@ -24,7 +24,7 @@ struct Electron {
 /// Reparte `e` electrones por Aufbau; dentro de cada subcapa aplica Hund:
 /// primero uno por orbital con spin paralelo (↑), luego se aparean (↓). Pauli: nunca
 /// dos electrones con los mismos cuatro números cuánticos.
-fn electrones(e: u32) -> Vec<Electron> {
+pub(crate) fn electrones(e: u32) -> Vec<Electron> {
     let mut v = Vec::new();
     let mut quedan = e;
     for (n, l) in orden_aufbau() {
@@ -75,9 +75,9 @@ fn nucleo(protones: u32, neutrones: u32, rng: &mut Rng) -> Vec<([f64; 3], bool)>
         .collect()
 }
 
-struct Nube {
+pub(crate) struct Nube {
     /// (posición en metros, color, índice del orbital).
-    puntos: Vec<([f64; 3], Color, usize)>,
+    pub(crate) puntos: Vec<([f64; 3], Color, usize)>,
     orbitales: Vec<(u32, u32, i32)>,
 }
 
@@ -91,7 +91,7 @@ fn color_l(l: u32, valencia: bool) -> Color {
     }
 }
 
-fn construir_nube(z: u32, elec: &[Electron], rng: &mut Rng) -> Nube {
+pub(crate) fn construir_nube(z: u32, elec: &[Electron], rng: &mut Rng) -> Nube {
     let config = config_de(elec);
     let n_max = elec.iter().map(|e| e.n).max().unwrap_or(1);
     let mut orbitales: Vec<(u32, u32, i32)> = Vec::new();

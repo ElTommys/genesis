@@ -187,6 +187,7 @@ pub const PLANTILLAS: &[Plantilla] = &[
     // ── Omnívoros ──
     Plantilla { nombre: "Jabalí", cientifico: "Sus scrofa", reino: Reino::Animalia, clase: "Mamífero", masa_kg: 90.0, vida_anios: 12.0, rasgos: [0.55, 0.45, 0.5, 0.5, 0.45, 0.4], t_opt: 12.0, t_tol: 12.0, lluvia_min: 300.0, habitat: "bosque templado, pradera" },
     Plantilla { nombre: "Oso pardo", cientifico: "Ursus arctos", reino: Reino::Animalia, clase: "Mamífero", masa_kg: 300.0, vida_anios: 25.0, rasgos: [0.75, 0.45, 0.6, 0.55, 0.25, 0.6], t_opt: 3.0, t_tol: 9.0, lluvia_min: 300.0, habitat: "taiga, bosque templado" },
+    Plantilla { nombre: "Humano", cientifico: "Homo sapiens", reino: Reino::Animalia, clase: "Mamífero primate", masa_kg: 70.0, vida_anios: 73.0, rasgos: [0.55, 0.5, 0.7, 0.5, 0.15, 0.9], t_opt: 20.0, t_tol: 14.0, lluvia_min: 250.0, habitat: "casi todos los biomas (gracias a la cultura y la tecnología)" },
     // ── Carnívoros ──
     Plantilla { nombre: "Zorro", cientifico: "Vulpes vulpes", reino: Reino::Animalia, clase: "Mamífero", masa_kg: 6.0, vida_anios: 5.0, rasgos: [0.4, 0.65, 0.65, 0.8, 0.45, 0.35], t_opt: 10.0, t_tol: 14.0, lluvia_min: 150.0, habitat: "casi todos los biomas templados" },
     Plantilla { nombre: "Zorro ártico", cientifico: "Vulpes lagopus", reino: Reino::Animalia, clase: "Mamífero", masa_kg: 4.0, vida_anios: 5.0, rasgos: [0.38, 0.6, 0.65, 0.85, 0.45, 0.35], t_opt: -8.0, t_tol: 8.0, lluvia_min: 50.0, habitat: "tundra" },

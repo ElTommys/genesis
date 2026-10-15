@@ -189,8 +189,21 @@ async fn bucle(mut b: Bioma) {
     let mut ticks_frame = 1u64;
     let mut elegido: Option<u64> = None;
     let mut seguir = false;
+    let mut interior: Option<crate::vista_cuerpo::Interior> = None;
 
     loop {
+        // Dentro de un organismo: el mundo sigue vivo por detrás.
+        if let Some(i) = interior.as_mut() {
+            if !pausa {
+                b.avanzar(ticks_frame);
+            }
+            if !i.frame(fuente.as_ref()) {
+                interior = None;
+                dist_obj = 9.0;
+            }
+            next_frame().await;
+            continue;
+        }
         // ── Controles ──
         if is_key_pressed(KeyCode::Space) { pausa = !pausa; }
         if is_key_pressed(KeyCode::Equal) || is_key_pressed(KeyCode::KpAdd) { ticks_frame = (ticks_frame * 2).clamp(1, 16); }
@@ -202,6 +215,17 @@ async fn bucle(mut b: Bioma) {
         if is_key_pressed(KeyCode::M) { b.p.tasa_mutacion = (b.p.tasa_mutacion * 2.0).min(0.1); }
         if is_key_pressed(KeyCode::N) { b.p.tasa_mutacion /= 2.0; }
         if is_key_pressed(KeyCode::F) { seguir = !seguir; }
+        // Enter (o seguir bajando con la rueda) entra al cuerpo del organismo elegido.
+        let quiere_entrar = is_key_pressed(KeyCode::Enter) || (dist_obj <= 2.6 && mouse_wheel().1 > 0.0);
+        if quiere_entrar {
+            if let Some(o) = elegido.and_then(|id| b.orgs.iter().find(|o| o.id == id)) {
+                if let Some(p) = plantilla_de(&b, o) {
+                    let e = &b.especies[o.especie];
+                    interior = Some(crate::vista_cuerpo::Interior::desde(&e.nombre, &e.cientifico, p.clase, p.reino, p.masa_kg));
+                    continue;
+                }
+            }
+        }
         for (k, nivel) in [
             (KeyCode::Key1, Nivel::Organismo),
             (KeyCode::Key2, Nivel::Poblacion),
@@ -599,6 +623,9 @@ async fn bucle(mut b: Bioma) {
         }
         let _ = TipoBioma::Oceano;
 
+        if nivel == Nivel::Organismo && elegido.is_some() {
+            txt("ENTER: entrar al cuerpo → órganos, tejidos, células, ADN, átomos", 20.0, h - 60.0, 16, Color::new(1.0, 0.85, 0.35, 1.0));
+        }
         txt("rueda: subir/bajar de nivel · 1-6 saltar a un nivel · arrastrar: girar · clic der. o WASD: moverse · clic: elegir · F: seguir",
             20.0, h - 38.0, 13, GRAY);
         txt("T/G: ±1 °C global · Y/H: ±lluvia · M/N: ±mutación · +/−: velocidad · espacio: pausa",

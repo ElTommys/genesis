@@ -12,6 +12,7 @@ pub const AYUDA: &str = "
   genesis vivir [opciones]         Ecosistema vivo en ventana (visual)
   genesis ver   [opciones]         Química 3D en ventana (visual; acepta las opciones de simular)
   genesis atomo [Z|símbolo]       Microscopio cuántico: nube |ψ|², núcleo, nucleones y quarks
+  genesis cuerpo [Humano|Conejo|Roble|...]  Dentro de un ser vivo: órgano → tejido → célula → ADN/ATP → átomo
   genesis mundo [--semilla N]       BIOSFERA 3D: organismo → población → comunidad → ecosistema → bioma
   genesis molecula [nombre|SMILES] Molécula 3D con su física (ej: agua, glucosa, ATP, CCO)
   genesis moleculas                Catálogo de moléculas
@@ -60,6 +61,14 @@ pub fn ejecutar(orden: &str, args: &[String]) {
             }
         }
         "reaccion" => reaccion(&args.join(" ")),
+        "cuerpo" => {
+            let n = args.first().map(String::as_str).unwrap_or("Humano");
+            let interior = match crate::conocimiento::PLANTILLAS.iter().find(|p| p.nombre.eq_ignore_ascii_case(n)) {
+                Some(p) => crate::vista_cuerpo::Interior::desde(p.nombre, p.cientifico, p.clase, p.reino, p.masa_kg),
+                None => crate::vista_cuerpo::Interior::humano(),
+            };
+            crate::vista_cuerpo::ver(interior);
+        }
         "mundo" => {
             let semilla = args.iter().position(|a| a == "--semilla").and_then(|i| args.get(i + 1)).and_then(|s| s.parse().ok()).unwrap_or(7);
             crate::vista_mundo::ver(crate::bioma::Bioma::mundo(semilla));
