@@ -8,9 +8,11 @@ mod mente;
 mod mundo;
 mod ordenes;
 mod particula;
+mod quimica;
 mod vida;
 mod vista;
 mod vista_atomo;
+mod vista_molecula;
 
 use cuantica::Atomo;
 use mundo::{Mundo, Parametros};
@@ -55,7 +57,7 @@ fn main() {
         },
         Some("simular") => simular(&args[1..]),
         Some("evolucionar") => evolucionar(&args[1..]),
-        Some(o @ ("saber" | "adn" | "bioma" | "ver" | "vivir" | "atomo")) => ordenes::ejecutar(o, &args[1..]),
+        Some(o @ ("saber" | "adn" | "bioma" | "ver" | "vivir" | "atomo" | "molecula" | "moleculas" | "reaccion")) => ordenes::ejecutar(o, &args[1..]),
         _ => {
             print!("{AYUDA}");
             print!("{}", ordenes::AYUDA);

@@ -12,6 +12,9 @@ pub const AYUDA: &str = "
   genesis vivir [opciones]         Ecosistema vivo en ventana (visual)
   genesis ver   [opciones]         Química 3D en ventana (visual; acepta las opciones de simular)
   genesis atomo [Z|símbolo]       Microscopio cuántico: nube |ψ|², núcleo, nucleones y quarks
+  genesis molecula [nombre|SMILES] Molécula 3D con su física (ej: agua, glucosa, ATP, CCO)
+  genesis moleculas                Catálogo de moléculas
+  genesis reaccion \"2H2 + O2 -> 2H2O\"  Balance y energía de una reacción
 
 OPCIONES DE bioma / vivir:
   --especies Pasto:500,Conejo:60,Zorro:8,Champiñón:30
@@ -35,6 +38,27 @@ pub fn ejecutar(orden: &str, args: &[String]) {
         }
         "vivir" => crate::vista::vivir(crear_bioma(args).0),
         "ver" => crate::vista::ver(crear_mundo(args)),
+        "molecula" => {
+            let entrada = args.join(" ");
+            let m = if entrada.trim().is_empty() {
+                None
+            } else {
+                let (nombre, smiles) = crate::quimica::buscar(&entrada).unwrap_or(("molécula", entrada.as_str()));
+                match crate::quimica::leer_smiles(nombre, smiles) {
+                    Ok(m) => Some(m),
+                    Err(e) => return eprintln!("No pude leer '{entrada}': {e}"),
+                }
+            };
+            crate::vista_molecula::ver(m);
+        }
+        "moleculas" => {
+            println!("{:<22} {:<16} {:>10}  SMILES", "molécula", "fórmula", "g/mol");
+            for (n, s, f) in crate::quimica::CATALOGO {
+                let m = crate::quimica::leer_smiles(n, s).unwrap();
+                println!("{n:<22} {f:<16} {:>10.3}  {s}", m.masa_molar());
+            }
+        }
+        "reaccion" => reaccion(&args.join(" ")),
         "atomo" => {
             let a = args.first().map(String::as_str).unwrap_or("C");
             let z = a.parse::<u32>().ok().or_else(|| crate::elementos::z_de_simbolo(a)).unwrap_or(6);
@@ -42,6 +66,24 @@ pub fn ejecutar(orden: &str, args: &[String]) {
         }
         _ => unreachable!(),
     }
+}
+
+fn reaccion(texto: &str) {
+    let r = match crate::quimica::leer_reaccion(texto) {
+        Ok(r) => r,
+        Err(e) => return eprintln!("{e}"),
+    };
+    use crate::quimica::Reaccion;
+    println!("Reactivos: {}", Reaccion::conteo_texto(&r.reactivos));
+    println!("Productos: {}", Reaccion::conteo_texto(&r.productos));
+    if !r.balanceada() {
+        println!("✗ No está balanceada: la masa no se conserva (ley de Lavoisier). Ajusta los coeficientes.");
+        return;
+    }
+    println!("✓ Balanceada: se conservan todos los átomos.");
+    let dh = r.entalpia_kj();
+    println!("ΔH ≈ {dh:.0} kJ por mol de reacción  →  {}", if dh < 0.0 { "exotérmica (libera energía)" } else { "endotérmica (absorbe energía)" });
+    println!("(estimada con energías medias de enlace: enlaces rotos − enlaces formados)");
 }
 
 fn adn(args: &[String]) {

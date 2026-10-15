@@ -2,6 +2,15 @@
 
 Simulador por escalas escrito en Rust, sin dependencias externas. Cada escala sale de las reglas de la anterior:
 
+## Jerarquía de la materia (columna vertebral del simulador)
+
+Cada nivel se construye solo con las reglas del anterior:
+
+1. **Nivel químico (abiótico):** partícula subatómica (quarks → protón/neutrón; electrón) → **átomo** → **molécula** → **macromolécula** (proteínas, lípidos, ADN) → **complejo supramolecular / orgánulo** (membrana, mitocondria, núcleo).
+2. **Nivel celular:** **célula**, la unidad mínima con vida (neurona, glóbulo rojo, célula vegetal).
+3. **Nivel tisular y orgánico:** **tejido** (epitelial, muscular, nervioso, conectivo; en plantas: meristemos, parénquima, xilema y floema) → **órgano** → **sistema o aparato**.
+4. **Nivel de organismo:** el ser vivo completo, con todos sus sistemas en equilibrio.
+
 | Escala | Módulo | Estado |
 |---|---|---|
 | 0 · Partículas: protón (uud), neutrón (udd), electrón; carga, masa y spin | `particula.rs`, `fisica.rs` | ✅ |
@@ -9,7 +18,9 @@ Simulador por escalas escrito en Rust, sin dependencias externas. Cada escala sa
 | 1 · Núcleo: R = 1.2·A^⅓ fm, energía de enlace (Weizsäcker), defecto de masa E = mc² | `fisica.rs` | ✅ |
 | 1 · Átomo cuántico: n, l, mₗ, mₛ · Aufbau · Pauli · Hund · Z_ef de Slater · ψ y \|ψ\|² · niveles y fotones | `cuantica.rs`, `fisica.rs` | ✅ |
 | 1 · Tabla periódica, moles y masa molar | `cuantica.rs`, `fisica.rs` | ✅ |
-| 2-3 · Química: enlaces, electronegatividad, cargas δ±, ángulos VSEPR | `mundo.rs` | ✅ |
+| 2 · Moléculas reales desde SMILES: geometría por física, enlaces simples/dobles/triples/aromáticos, tipo de enlace, energías, masa molar, dipolo | `quimica.rs`, `vista_molecula.rs` | ✅ |
+| 2 · Reacciones: balance (Lavoisier) y ΔH por energías de enlace | `quimica.rs` | ✅ |
+| 2-3 · Química dinámica: átomos que chocan y reaccionan solos | `mundo.rs` | ✅ |
 | 3 · Fisión y fusión (U-235 → productos; cadenas de decaimiento) | — | siguiente |
 | 4 · Bioquímica: agua, aminoácidos, ADN/ARN, código genético, proteínas | `vida.rs` | 🟡 parcial |
 | 4 · Metabolismo: ATP, glucólisis, ciclo de Krebs, cadena respiratoria, fotosíntesis | — | pendiente |
@@ -24,6 +35,8 @@ Simulador por escalas escrito en Rust, sin dependencias externas. Cada escala sa
 
 ```
 cargo run --release -- atomo U        # microscopio cuántico: zoom del átomo a los quarks
+cargo run --release -- molecula glucosa  # molécula 3D (o cualquier SMILES: molecula "CCO")
+cargo run --release -- reaccion "C6H12O6 + 6O2 -> 6CO2 + 6H2O"
 cargo run --release -- tabla
 cargo run --release -- elemento Fe
 cargo run --release -- simular --atomos H:400,O:200,C:50 --caja 14 --temp 1.0 --pasos 20000
