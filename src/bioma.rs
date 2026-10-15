@@ -152,6 +152,12 @@ pub struct Especie {
     pub aparecio: u64,
     pub extinta: Option<u64>,
     pub ancestro: Option<usize>,
+    /// Nicho climático (heredado de la plantilla; no evoluciona todavía).
+    pub t_opt: f32,
+    pub t_tol: f32,
+    pub lluvia_min: f32,
+    /// Plantilla original (para la inmigración desde biomas vecinos).
+    pub plantilla: Option<&'static str>,
 }
 
 #[derive(Debug, Clone, Copy, Default)]
@@ -166,6 +172,7 @@ pub struct Estadisticas {
     pub mutaciones: Mutaciones,
     pub especiaciones: u64,
     pub extinciones: u64,
+    pub migraciones: u64,
     pub generacion_max: u32,
 }
 
@@ -187,6 +194,8 @@ pub struct Bioma {
     pub tick: u64,
     /// Historial de población por nivel trófico (cada 10 ticks).
     pub historial: Vec<[usize; 5]>,
+    /// Mundo con relieve, clima y biomas (None = un solo clima uniforme).
+    pub clima: Option<crate::clima::Clima>,
     rng: Rng,
     sig_id: u64,
     rejilla: Vec<Vec<usize>>,
@@ -215,11 +224,31 @@ impl Bioma {
             est: Estadisticas::default(),
             tick: 0,
             historial: Vec::new(),
+            clima: None,
             sig_id: 1,
             rejilla: vec![Vec::new(); r_cols * r_filas],
             r_cols,
             r_filas,
         }
+    }
+
+    /// La biosfera completa: continente con relieve, clima y biomas, y cada especie
+    /// de la base de conocimiento sembrada donde su clima le sirve.
+    pub fn mundo(semilla: u64) -> Bioma {
+        let p = ParamBioma { ancho: 3200.0, alto: 2200.0, max_organismos: 16000, semilla, ..Default::default() };
+        let mut b = Bioma::nuevo(p);
+        b.clima = Some(crate::clima::Clima::generar(3200.0, 2200.0, semilla));
+        for pl in crate::conocimiento::PLANTILLAS {
+            let n = match pl.reino {
+                Reino::Plantae if pl.rasgos[0] > 0.5 => 260,
+                Reino::Plantae => 700,
+                Reino::Animalia if pl.rasgos[3] > 0.66 => 14,
+                Reino::Animalia => 60,
+                Reino::Fungi => 250,
+            };
+            b.sembrar(pl, n);
+        }
+        b
     }
 
     pub fn sembrar(&mut self, pl: &Plantilla, cantidad: usize) {
@@ -236,20 +265,65 @@ impl Bioma {
             aparecio: self.tick,
             extinta: None,
             ancestro: None,
+            t_opt: pl.t_opt,
+            t_tol: pl.t_tol,
+            lluvia_min: pl.lluvia_min,
+            plantilla: Some(pl.nombre),
         });
+        self.repoblar(especie, cantidad);
+        self.contar_especies();
+    }
+
+    /// Agrega `cantidad` individuos de la especie en lugares donde su clima le sirve.
+    pub fn repoblar(&mut self, especie: usize, cantidad: usize) {
+        let ref_gen = self.especies[especie].referencia.clone();
+        let reino = self.especies[especie].reino;
         for _ in 0..cantidad {
             let mut g = ref_gen.clone();
             let m = g.mutar(self.p.tasa_mutacion * 5.0, &mut self.rng);
             self.est.mutaciones.sumar(&m);
-            let pos = [self.rng.unif() as f32 * self.p.ancho, self.rng.unif() as f32 * self.p.alto];
+            let mut pos = [self.rng.unif() as f32 * self.p.ancho, self.rng.unif() as f32 * self.p.alto];
+            if self.clima.is_some() {
+                for _ in 0..300 {
+                    if self.idoneidad(especie, pos) > 0.55 {
+                        break;
+                    }
+                    pos = [self.rng.unif() as f32 * self.p.ancho, self.rng.unif() as f32 * self.p.alto];
+                }
+                if self.idoneidad(especie, pos) <= 0.3 {
+                    continue;
+                }
+            }
             let id = self.id();
-            let mut o = Organismo::nuevo(id, pl.reino, especie, g, pos, 0.0, 0);
+            let mut o = Organismo::nuevo(id, reino, especie, g, pos, 0.0, 0);
             o.energia = o.cuerpo() * 1.2;
             o.edad = self.rng.rango(o.longevidad as usize / 3) as u32;
             o.dir = (self.rng.unif() * std::f64::consts::TAU) as f32;
             self.orgs.push(o);
         }
         self.contar_especies();
+    }
+
+    pub fn temperatura_en(&self, pos: [f32; 2]) -> f32 {
+        self.clima.as_ref().map_or(self.p.temperatura, |c| c.temperatura(pos))
+    }
+
+    pub fn lluvia_en(&self, pos: [f32; 2]) -> f32 {
+        self.clima.as_ref().map_or(1000.0, |c| c.lluvia(pos))
+    }
+
+    /// Qué tan bien le sirve el clima de `pos` a la especie (0..1): campana de Gauss
+    /// alrededor de su temperatura óptima × suficiencia de lluvia. Agua = 0.
+    pub fn idoneidad(&self, especie: usize, pos: [f32; 2]) -> f32 {
+        let Some(c) = &self.clima else { return 1.0 };
+        if c.es_agua(pos) {
+            return 0.0;
+        }
+        let e = &self.especies[especie];
+        let t = c.temperatura(pos);
+        let g = (-((t - e.t_opt) / e.t_tol).powi(2)).exp();
+        let l = if e.lluvia_min > 0.0 { (c.lluvia(pos) / e.lluvia_min).min(1.0) } else { 1.0 };
+        g * l
     }
 
     fn id(&mut self) -> u64 {
@@ -346,7 +420,10 @@ impl Bioma {
                 if o.energia <= 0.0 { self.est.muertes_hambre += 1 } else { self.est.muertes_vejez += 1 }
                 self.morir(i);
             }
-            if self.orgs[i].vivo && self.orgs.len() + nuevos.len() < self.p.max_organismos {
+            // El tope global solo frena a plantas y hongos (que llenan el espacio); los animales
+            // se regulan por comida.
+            let hay_lugar = self.orgs[i].reino == Reino::Animalia || self.orgs.len() + nuevos.len() < self.p.max_organismos;
+            if self.orgs[i].vivo && hay_lugar {
                 self.reproducir(i, &mut nuevos, &mut vecinos);
             }
         }
@@ -364,6 +441,16 @@ impl Bioma {
             *s = (*s + 0.001).min(30.0);
         }
         self.tick += 1;
+        // Inmigración: si una especie desaparece del mapa, llegan unos pocos desde
+        // fuera (metapoblaciones: los biomas reales no son islas cerradas).
+        if self.clima.is_some() && self.tick % 500 == 0 {
+            for e in 0..self.especies.len() {
+                if self.especies[e].plantilla.is_some() && self.especies[e].poblacion == 0 && self.orgs.len() < self.p.max_organismos {
+                    self.est.migraciones += 1;
+                    self.repoblar(e, 6);
+                }
+            }
+        }
         if self.tick % 10 == 0 {
             self.contar_especies();
             self.historial.push(self.por_nivel());
@@ -381,7 +468,8 @@ impl Bioma {
         let sombra = vecinos.iter().filter(|&&j| self.orgs[j].reino == Reino::Plantae).count().saturating_sub(1) as f32;
         let k = self.celda_suelo(pos);
         let nutr = self.suelo[k];
-        let ganancia = self.p.luz * 0.08 * tam * (nutr / (nutr + 1.0)) * q10.min(2.0) / (1.0 + 0.5 * sombra);
+        let factor_clima = if self.clima.is_some() { self.idoneidad(self.orgs[i].especie, pos) * 1.6 } else { q10.min(2.0) };
+        let ganancia = self.p.luz * 0.08 * tam * (nutr / (nutr + 1.0)) * factor_clima / (1.0 + 0.5 * sombra);
         let consumo = (ganancia * 0.25).min(self.suelo[k]);
         self.suelo[k] -= consumo;
         let o = &mut self.orgs[i];
@@ -463,7 +551,17 @@ impl Bioma {
         } else {
             dir += (self.rng.unif() as f32 - 0.5) * 0.6;
         }
-        let pos = self.envolver([yo.pos[0] + dir.cos() * yo.vel, yo.pos[1] + dir.sin() * yo.vel]);
+        let mut pos = self.envolver([yo.pos[0] + dir.cos() * yo.vel, yo.pos[1] + dir.sin() * yo.vel]);
+        let mut termo = termo;
+        if let Some(c) = &self.clima {
+            if c.es_agua(pos) {
+                // No sabe nadar: se da la vuelta en la orilla.
+                pos = yo.pos;
+                dir += std::f32::consts::PI * (0.7 + 0.6 * self.rng.unif() as f32);
+            }
+            // Fuera de su nicho climático gasta más energía en termorregular.
+            termo = 1.0 + 1.5 * (1.0 - self.idoneidad(yo.especie, pos));
+        }
         let costo = (0.002 * (yo.tam * yo.tam).powf(0.75) + 0.0006 * yo.vel * yo.vel * yo.tam) * termo;
         {
             let o = &mut self.orgs[i];
@@ -516,6 +614,9 @@ impl Bioma {
                 let pos = self.envolver([o.pos[0] + a.cos() * r, o.pos[1] + a.sin() * r]);
                 // Sin espacio no hay donde germinar: el límite de las plantas es el terreno.
                 let reino = o.reino;
+                if self.clima.as_ref().is_some_and(|c| c.es_agua(pos)) {
+                    return;
+                }
                 self.cercanos(pos, 9.0, vecinos);
                 if vecinos.iter().filter(|&&j| self.orgs[j].reino == reino).count() >= 2 {
                     return;
@@ -540,6 +641,12 @@ impl Bioma {
                     j != i && p.especie == yo.especie && p.maduro() && p.energia > p.umbral_reproduccion() * 0.5
                 });
                 let Some(j) = pareja else { return };
+                // Dependencia de la densidad: con demasiados congéneres cerca (territorio,
+                // estrés, enfermedades) no hay cría. Es la capacidad de carga local.
+                let congeneres = vecinos.iter().filter(|&&k| self.orgs[k].especie == yo.especie).count();
+                if congeneres > 8 {
+                    return;
+                }
                 let camada = 1 + (yo.fert * yo.fert * 4.0) as usize;
                 if camada >= 2 {
                     self.est.mellizos += 1;
@@ -602,6 +709,10 @@ impl Bioma {
             aparecio: self.tick,
             extinta: None,
             ancestro: Some(madre),
+            t_opt: self.especies[madre].t_opt,
+            t_tol: self.especies[madre].t_tol,
+            lluvia_min: self.especies[madre].lluvia_min,
+            plantilla: None,
         };
         self.especies.push(nueva);
         self.especies.len() - 1
@@ -695,6 +806,23 @@ mod tests {
         b.sembrar(plantilla("Pasto").unwrap(), 200);
         b.avanzar(3000);
         assert_eq!(b.por_nivel()[0], 0);
+    }
+}
+
+#[cfg(test)]
+mod diag_mundo {
+    use super::*;
+    #[test]
+    #[ignore]
+    fn diag_mundo() {
+        let mut b = Bioma::mundo(7);
+        for _ in 0..8 {
+            let t0 = std::time::Instant::now();
+            b.avanzar(500);
+            let v = b.por_nivel();
+            let vivas: Vec<String> = b.especies.iter().filter(|e| e.poblacion > 0 && e.plantilla.is_some()).map(|e| format!("{}:{}", e.nombre, e.poblacion)).collect();
+            eprintln!("t{} {:?} {:.2}s mig {} | {}", b.tick, v, t0.elapsed().as_secs_f32(), b.est.migraciones, vivas.join(" "));
+        }
     }
 }
 

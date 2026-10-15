@@ -12,6 +12,7 @@ pub const AYUDA: &str = "
   genesis vivir [opciones]         Ecosistema vivo en ventana (visual)
   genesis ver   [opciones]         Química 3D en ventana (visual; acepta las opciones de simular)
   genesis atomo [Z|símbolo]       Microscopio cuántico: nube |ψ|², núcleo, nucleones y quarks
+  genesis mundo [--semilla N]       BIOSFERA 3D: organismo → población → comunidad → ecosistema → bioma
   genesis molecula [nombre|SMILES] Molécula 3D con su física (ej: agua, glucosa, ATP, CCO)
   genesis moleculas                Catálogo de moléculas
   genesis reaccion \"2H2 + O2 -> 2H2O\"  Balance y energía de una reacción
@@ -59,6 +60,10 @@ pub fn ejecutar(orden: &str, args: &[String]) {
             }
         }
         "reaccion" => reaccion(&args.join(" ")),
+        "mundo" => {
+            let semilla = args.iter().position(|a| a == "--semilla").and_then(|i| args.get(i + 1)).and_then(|s| s.parse().ok()).unwrap_or(7);
+            crate::vista_mundo::ver(crate::bioma::Bioma::mundo(semilla));
+        }
         "atomo" => {
             let a = args.first().map(String::as_str).unwrap_or("C");
             let z = a.parse::<u32>().ok().or_else(|| crate::elementos::z_de_simbolo(a)).unwrap_or(6);

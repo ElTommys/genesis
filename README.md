@@ -28,12 +28,15 @@ Cada nivel se construye solo con las reglas del anterior:
 | 6 · Tejidos animales: epitelial, conectivo, sanguíneo, muscular, nervioso → órganos y sistemas | — | pendiente |
 | 6 · Tejidos vegetales: meristemos, parénquima (clorofila), xilema y floema, epidermis y estomas (intercambio gaseoso) | — | pendiente |
 | 6 · Digestión: los alimentos se descomponen en glucosa, aminoácidos y lípidos, que alimentan el ATP y la síntesis de proteínas | — | pendiente |
-| 7 · Organismos, poblaciones, especies y genética de poblaciones | `bioma.rs`, `mente.rs` | 🟡 equilibrio en curso |
-| 8 · Ecosistema y bioma | `bioma.rs` | 🟡 |
+| 7 · Organismo → población → comunidad → ecosistema: densidad, estructura de edades, riqueza, índice de Shannon, pirámide de biomasa | `bioma.rs`, `vista_mundo.rs` | ✅ |
+| 8 · Biomas por Whittaker (tundra, taiga, bosque, pradera, desierto, matorral, sabana, selva) con relieve, clima (−6.5 °C/km) y lluvia orográfica | `clima.rs` | ✅ |
+| 8 · 23 especies reales con nicho climático, dependencia de la densidad e inmigración | `conocimiento.rs`, `bioma.rs` | ✅ |
+| 9 · Biosfera: cambio climático global editable (los biomas se desplazan) | `clima.rs`, `vista_mundo.rs` | ✅ |
 
 ## Uso
 
 ```
+cargo run --release -- mundo           # BIOSFERA 3D: zoom de organismo a bioma
 cargo run --release -- atomo U        # microscopio cuántico: zoom del átomo a los quarks
 cargo run --release -- molecula glucosa  # molécula 3D (o cualquier SMILES: molecula "CCO")
 cargo run --release -- reaccion "C6H12O6 + 6O2 -> 6CO2 + 6H2O"

@@ -150,6 +150,13 @@ pub struct Plantilla {
     pub masa_kg: f64,
     pub vida_anios: f64,
     pub rasgos: [f64; 6],
+    /// Temperatura media anual óptima (°C) y tolerancia (°C) de su nicho climático.
+    pub t_opt: f32,
+    pub t_tol: f32,
+    /// Lluvia anual mínima que necesita (mm).
+    pub lluvia_min: f32,
+    /// Biomas donde vive en la naturaleza.
+    pub habitat: &'static str,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -160,14 +167,34 @@ pub enum Reino {
 }
 
 pub const PLANTILLAS: &[Plantilla] = &[
-    Plantilla { nombre: "Pasto", cientifico: "Poaceae", reino: Reino::Plantae, clase: "Monocotiledónea", masa_kg: 0.01, vida_anios: 2.0, rasgos: [0.2, 0.0, 0.0, 0.0, 0.7, 0.3] },
-    Plantilla { nombre: "Trébol", cientifico: "Trifolium repens", reino: Reino::Plantae, clase: "Dicotiledónea", masa_kg: 0.005, vida_anios: 3.0, rasgos: [0.15, 0.0, 0.0, 0.0, 0.8, 0.35] },
-    Plantilla { nombre: "Conejo", cientifico: "Oryctolagus cuniculus", reino: Reino::Animalia, clase: "Mamífero", masa_kg: 2.0, vida_anios: 9.0, rasgos: [0.25, 0.6, 0.45, 0.1, 0.8, 0.25] },
-    Plantilla { nombre: "Venado", cientifico: "Odocoileus virginianus", reino: Reino::Animalia, clase: "Mamífero", masa_kg: 70.0, vida_anios: 15.0, rasgos: [0.5, 0.6, 0.55, 0.05, 0.4, 0.45] },
-    Plantilla { nombre: "Jabalí", cientifico: "Sus scrofa", reino: Reino::Animalia, clase: "Mamífero", masa_kg: 90.0, vida_anios: 12.0, rasgos: [0.55, 0.45, 0.5, 0.5, 0.45, 0.4] },
-    Plantilla { nombre: "Zorro", cientifico: "Vulpes vulpes", reino: Reino::Animalia, clase: "Mamífero", masa_kg: 6.0, vida_anios: 5.0, rasgos: [0.4, 0.65, 0.65, 0.8, 0.45, 0.35] },
-    Plantilla { nombre: "Lobo", cientifico: "Canis lupus", reino: Reino::Animalia, clase: "Mamífero", masa_kg: 40.0, vida_anios: 8.0, rasgos: [0.6, 0.7, 0.75, 0.95, 0.35, 0.5] },
-    Plantilla { nombre: "Champiñón", cientifico: "Agaricus bisporus", reino: Reino::Fungi, clase: "Basidiomiceto", masa_kg: 0.02, vida_anios: 1.0, rasgos: [0.15, 0.05, 0.3, 0.0, 0.7, 0.3] },
+    // ── Productores ──
+    Plantilla { nombre: "Pasto", cientifico: "Poaceae", reino: Reino::Plantae, clase: "Monocotiledónea", masa_kg: 0.01, vida_anios: 2.0, rasgos: [0.2, 0.0, 0.0, 0.0, 0.7, 0.3], t_opt: 16.0, t_tol: 14.0, lluvia_min: 250.0, habitat: "pradera, sabana, bosque templado" },
+    Plantilla { nombre: "Trébol", cientifico: "Trifolium repens", reino: Reino::Plantae, clase: "Dicotiledónea", masa_kg: 0.005, vida_anios: 3.0, rasgos: [0.15, 0.0, 0.0, 0.0, 0.8, 0.35], t_opt: 12.0, t_tol: 9.0, lluvia_min: 500.0, habitat: "pradera, bosque templado" },
+    Plantilla { nombre: "Roble", cientifico: "Quercus robur", reino: Reino::Plantae, clase: "Angiosperma dicotiledónea", masa_kg: 5000.0, vida_anios: 500.0, rasgos: [0.85, 0.0, 0.0, 0.0, 0.3, 0.95], t_opt: 11.0, t_tol: 6.0, lluvia_min: 600.0, habitat: "bosque templado" },
+    Plantilla { nombre: "Pino", cientifico: "Pinus sylvestris", reino: Reino::Plantae, clase: "Gimnosperma conífera", masa_kg: 2000.0, vida_anios: 300.0, rasgos: [0.75, 0.0, 0.0, 0.0, 0.35, 0.9], t_opt: 1.0, t_tol: 7.0, lluvia_min: 300.0, habitat: "taiga" },
+    Plantilla { nombre: "Liquen", cientifico: "Cladonia rangiferina", reino: Reino::Plantae, clase: "Simbiosis hongo-alga", masa_kg: 0.001, vida_anios: 50.0, rasgos: [0.1, 0.0, 0.0, 0.0, 0.6, 0.6], t_opt: -8.0, t_tol: 7.0, lluvia_min: 100.0, habitat: "tundra" },
+    Plantilla { nombre: "Saguaro", cientifico: "Carnegiea gigantea", reino: Reino::Plantae, clase: "Cactácea (CAM)", masa_kg: 2000.0, vida_anios: 150.0, rasgos: [0.6, 0.0, 0.0, 0.0, 0.3, 0.9], t_opt: 23.0, t_tol: 8.0, lluvia_min: 50.0, habitat: "desierto, matorral" },
+    Plantilla { nombre: "Acacia", cientifico: "Vachellia tortilis", reino: Reino::Plantae, clase: "Leguminosa", masa_kg: 1500.0, vida_anios: 100.0, rasgos: [0.7, 0.0, 0.0, 0.0, 0.4, 0.85], t_opt: 25.0, t_tol: 6.0, lluvia_min: 300.0, habitat: "sabana, matorral" },
+    Plantilla { nombre: "Ceiba", cientifico: "Ceiba pentandra", reino: Reino::Plantae, clase: "Angiosperma dicotiledónea", masa_kg: 20000.0, vida_anios: 300.0, rasgos: [0.95, 0.0, 0.0, 0.0, 0.35, 0.95], t_opt: 26.0, t_tol: 4.0, lluvia_min: 1500.0, habitat: "selva tropical" },
+    Plantilla { nombre: "Helecho", cientifico: "Pteridium aquilinum", reino: Reino::Plantae, clase: "Pteridófita", masa_kg: 0.5, vida_anios: 10.0, rasgos: [0.3, 0.0, 0.0, 0.0, 0.75, 0.4], t_opt: 22.0, t_tol: 8.0, lluvia_min: 1200.0, habitat: "selva tropical, bosque templado húmedo" },
+    // ── Herbívoros ──
+    Plantilla { nombre: "Conejo", cientifico: "Oryctolagus cuniculus", reino: Reino::Animalia, clase: "Mamífero", masa_kg: 2.0, vida_anios: 9.0, rasgos: [0.25, 0.6, 0.45, 0.1, 0.8, 0.25], t_opt: 13.0, t_tol: 11.0, lluvia_min: 250.0, habitat: "pradera, bosque templado" },
+    Plantilla { nombre: "Venado", cientifico: "Odocoileus virginianus", reino: Reino::Animalia, clase: "Mamífero", masa_kg: 70.0, vida_anios: 15.0, rasgos: [0.5, 0.6, 0.55, 0.05, 0.4, 0.45], t_opt: 10.0, t_tol: 10.0, lluvia_min: 400.0, habitat: "bosque templado" },
+    Plantilla { nombre: "Reno", cientifico: "Rangifer tarandus", reino: Reino::Animalia, clase: "Mamífero", masa_kg: 120.0, vida_anios: 15.0, rasgos: [0.55, 0.55, 0.55, 0.05, 0.35, 0.45], t_opt: -6.0, t_tol: 9.0, lluvia_min: 100.0, habitat: "tundra, taiga" },
+    Plantilla { nombre: "Camello", cientifico: "Camelus dromedarius", reino: Reino::Animalia, clase: "Mamífero", masa_kg: 500.0, vida_anios: 40.0, rasgos: [0.7, 0.4, 0.6, 0.08, 0.25, 0.7], t_opt: 25.0, t_tol: 9.0, lluvia_min: 30.0, habitat: "desierto" },
+    Plantilla { nombre: "Cebra", cientifico: "Equus quagga", reino: Reino::Animalia, clase: "Mamífero", masa_kg: 300.0, vida_anios: 25.0, rasgos: [0.6, 0.65, 0.55, 0.06, 0.35, 0.55], t_opt: 25.0, t_tol: 6.0, lluvia_min: 300.0, habitat: "sabana" },
+    Plantilla { nombre: "Mono aullador", cientifico: "Alouatta palliata", reino: Reino::Animalia, clase: "Mamífero primate", masa_kg: 7.0, vida_anios: 20.0, rasgos: [0.35, 0.45, 0.6, 0.2, 0.35, 0.5], t_opt: 26.0, t_tol: 4.0, lluvia_min: 1500.0, habitat: "selva tropical" },
+    // ── Omnívoros ──
+    Plantilla { nombre: "Jabalí", cientifico: "Sus scrofa", reino: Reino::Animalia, clase: "Mamífero", masa_kg: 90.0, vida_anios: 12.0, rasgos: [0.55, 0.45, 0.5, 0.5, 0.45, 0.4], t_opt: 12.0, t_tol: 12.0, lluvia_min: 300.0, habitat: "bosque templado, pradera" },
+    Plantilla { nombre: "Oso pardo", cientifico: "Ursus arctos", reino: Reino::Animalia, clase: "Mamífero", masa_kg: 300.0, vida_anios: 25.0, rasgos: [0.75, 0.45, 0.6, 0.55, 0.25, 0.6], t_opt: 3.0, t_tol: 9.0, lluvia_min: 300.0, habitat: "taiga, bosque templado" },
+    // ── Carnívoros ──
+    Plantilla { nombre: "Zorro", cientifico: "Vulpes vulpes", reino: Reino::Animalia, clase: "Mamífero", masa_kg: 6.0, vida_anios: 5.0, rasgos: [0.4, 0.65, 0.65, 0.8, 0.45, 0.35], t_opt: 10.0, t_tol: 14.0, lluvia_min: 150.0, habitat: "casi todos los biomas templados" },
+    Plantilla { nombre: "Zorro ártico", cientifico: "Vulpes lagopus", reino: Reino::Animalia, clase: "Mamífero", masa_kg: 4.0, vida_anios: 5.0, rasgos: [0.38, 0.6, 0.65, 0.85, 0.45, 0.35], t_opt: -8.0, t_tol: 8.0, lluvia_min: 50.0, habitat: "tundra" },
+    Plantilla { nombre: "Lobo", cientifico: "Canis lupus", reino: Reino::Animalia, clase: "Mamífero", masa_kg: 40.0, vida_anios: 8.0, rasgos: [0.6, 0.7, 0.75, 0.95, 0.35, 0.5], t_opt: 4.0, t_tol: 11.0, lluvia_min: 200.0, habitat: "taiga, bosque templado, tundra" },
+    Plantilla { nombre: "León", cientifico: "Panthera leo", reino: Reino::Animalia, clase: "Mamífero felino", masa_kg: 190.0, vida_anios: 14.0, rasgos: [0.7, 0.7, 0.7, 0.95, 0.35, 0.5], t_opt: 25.0, t_tol: 6.0, lluvia_min: 250.0, habitat: "sabana" },
+    Plantilla { nombre: "Jaguar", cientifico: "Panthera onca", reino: Reino::Animalia, clase: "Mamífero felino", masa_kg: 90.0, vida_anios: 12.0, rasgos: [0.65, 0.65, 0.7, 0.95, 0.3, 0.5], t_opt: 26.0, t_tol: 4.0, lluvia_min: 1200.0, habitat: "selva tropical" },
+    // ── Descomponedores ──
+    Plantilla { nombre: "Champiñón", cientifico: "Agaricus bisporus", reino: Reino::Fungi, clase: "Basidiomiceto", masa_kg: 0.02, vida_anios: 1.0, rasgos: [0.15, 0.05, 0.3, 0.0, 0.7, 0.3], t_opt: 15.0, t_tol: 15.0, lluvia_min: 200.0, habitat: "casi todos los biomas" },
 ];
 
 pub fn plantilla(nombre: &str) -> Option<&'static Plantilla> {
